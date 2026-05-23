@@ -9,8 +9,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
 spec:
   rules:
-    - host: {{ .Values.ingress.host }}
-      http:
+    - http:
         paths:
           - path: {{ .Values.ingress.path }}
             pathType: Prefix
@@ -19,10 +18,4 @@ spec:
                 name: {{ .Release.Name }}-service
                 port:
                   number: {{ .Values.service.port }}
-  {{- if .Values.ingress.tls }}
-  tls:
-    - hosts:
-        - {{ .Values.ingress.host }}
-      secretName: {{ .Release.Name }}-tls
-  {{- end }}
 {{- end }}

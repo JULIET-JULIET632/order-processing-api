@@ -12,7 +12,7 @@ service:
 
 ingress:
   enabled: true
-  host: "3.92.135.206"
+  host: ""
   path: /
   tls: false
 
