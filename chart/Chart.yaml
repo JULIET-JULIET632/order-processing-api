@@ -1,0 +1,6 @@
+apiVersion: v2
+name: order-processing-api
+description: Node.js order processing API for the platform GitOps pipeline
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

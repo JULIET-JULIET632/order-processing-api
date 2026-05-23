@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ .Release.Name }}-rollout
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: order-processing-api
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.env.NODE_ENV }}
+            - name: PORT
+              value: {{ .Values.env.PORT | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.env.LOG_LEVEL }}
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            failureThreshold: 3
+  strategy:
+    canary:
+      canaryService: {{ .Release.Name }}-canary-service
+      stableService: {{ .Release.Name }}-service
+      steps:
+        - setWeight: 10
+        - analysis:
+            templates:
+              - templateName: {{ .Release.Name }}-analysis
+        - pause:
+            duration: 2m
+        - setWeight: 50
+        - analysis:
+            templates:
+              - templateName: {{ .Release.Name }}-analysis
+        - pause:
+            duration: 2m

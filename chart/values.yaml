@@ -1,0 +1,54 @@
+image:
+  repository: juliet237/order-processing-api
+  pullPolicy: Always
+  tag: "v1.0.0"
+
+replicaCount: 2
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+ingress:
+  enabled: true
+  host: "3.92.135.206"
+  path: /
+  tls: false
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "256Mi"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+probes:
+  readiness:
+    path: /health
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  liveness:
+    path: /health
+    initialDelaySeconds: 15
+    periodSeconds: 20
+
+rollout:
+  canary:
+    steps:
+      - setWeight: 10
+      - pause: {duration: 2m}
+      - setWeight: 50
+      - pause: {duration: 2m}
+
+env:
+  NODE_ENV: production
+  PORT: "3000"
+  LOG_LEVEL: info
