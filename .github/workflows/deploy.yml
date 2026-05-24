@@ -1,0 +1,60 @@
+name: Build and Deploy
+
+# Triggers on every push to main branch
+on:
+  push:
+    branches:
+      - main
+    # Only run when app code changes
+    # Ignore pushes that only update values.yaml
+    # (those are made by this pipeline itself)
+    paths-ignore:
+      - 'chart/values.yaml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      # Step 2: Log in to DockerHub
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Step 3: Build and push Docker image
+      # Tagged with the Git SHA — every deploy is unique and traceable
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/order-processing-api:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/order-processing-api:latest
+
+      # Step 4: Update values.yaml with new image tag
+      # This is the only thing that triggers ArgoCD to deploy
+      # The pipeline never touches kubectl — Git does the deploying
+      - name: Update image tag in values.yaml
+        run: |
+          sed -i "s|tag: .*|tag: \"${{ github.sha }}\"|" chart/values.yaml
+          cat chart/values.yaml | grep tag
+
+      # Step 5: Commit and push the updated values.yaml
+      # ArgoCD watches this file — when it changes, deployment begins
+      - name: Commit and push values.yaml
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add chart/values.yaml
+          git commit -m "chore: bump image tag to ${{ github.sha }}"
+          git push
