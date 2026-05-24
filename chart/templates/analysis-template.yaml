@@ -4,9 +4,6 @@ metadata:
   name: {{ .Release.Name }}-analysis
 spec:
   metrics:
-    # METRIC 1: Error rate
-    # Queries Prometheus for 5xx responses on canary pods
-    # If error rate exceeds 1% → rollback
     - name: error-rate
       interval: 30s
       count: 5
@@ -15,13 +12,11 @@ spec:
         prometheus:
           address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
           query: |
-            sum(rate(http_requests_total{status=~"5.."}[2m]))
+            sum(rate(http_requests_total{status=~"5.."}[2m])) or vector(0)
             /
-            sum(rate(http_requests_total[2m])) * 100
+            (sum(rate(http_requests_total[2m])) or vector(1)) * 100
       successCondition: result[0] < 1
 
-    # METRIC 2: p95 response time
-    # If 95th percentile latency exceeds 500ms → rollback
     - name: p95-response-time
       interval: 30s
       count: 5
@@ -32,5 +27,5 @@ spec:
           query: |
             histogram_quantile(0.95,
               sum(rate(http_request_duration_seconds_bucket[2m])) by (le)
-            )
+            ) or vector(0)
       successCondition: result[0] < 0.5
