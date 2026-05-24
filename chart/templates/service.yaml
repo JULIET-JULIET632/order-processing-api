@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}-service
+  labels:
+    app: {{ .Release.Name }}
 spec:
   type: {{ .Values.service.type }}
   selector:
@@ -10,14 +12,14 @@ spec:
     - protocol: TCP
       port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}
+      name: http
 ---
-# Canary service — Argo Rollouts uses this to split
-# traffic between stable and canary pods
-# Must exist separately from the main service
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}-canary-service
+  labels:
+    app: {{ .Release.Name }}
 spec:
   type: {{ .Values.service.type }}
   selector:
@@ -26,3 +28,4 @@ spec:
     - protocol: TCP
       port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}
+      name: http
