@@ -54,9 +54,14 @@ app.get('/metrics', async (req, res) => {
   res.end(await register.metrics());
 });
 
-// BROKEN — deliberately returns 500 to trigger rollback
 app.get('/orders', (req, res) => {
-  res.status(500).json({ error: 'Something went wrong' });
+  res.status(200).json({
+    orders: [
+      { id: '001', item: 'Laptop', status: 'shipped' },
+      { id: '002', item: 'Phone', status: 'processing' },
+      { id: '003', item: 'Tablet', status: 'delivered' }
+    ]
+  });
 });
 
 app.post('/orders', (req, res) => {
