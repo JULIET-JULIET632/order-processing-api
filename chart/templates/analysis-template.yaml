@@ -27,7 +27,7 @@ spec:
       failureLimit: 1
       provider:
         prometheus:
-          address: http://prometheus-service.monitoring.svc.cluster.local:9090
+          address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
           query: |
             histogram_quantile(0.95,
               sum(rate(http_request_duration_seconds_bucket[2m])) by (le)
