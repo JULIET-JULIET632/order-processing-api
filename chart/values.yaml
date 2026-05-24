@@ -1,7 +1,7 @@
 image:
   repository: juliet237/order-processing-api
   pullPolicy: Always
-  tag: "2fc251073dadf42e64dad73f307636791ea03072"
+  tag: "bc8b513dd5cf49f7aed99b4b2c7844e4ad54fdcb"
 
 replicaCount: 2
 
